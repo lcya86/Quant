@@ -15,7 +15,6 @@ def TrackPrice(indata):
             buyprice = str(indata.Data[k][0])
         if(indata.Fields[k] == "rt_ask1"):
             sellprice = str(indata.Data[k][0])
-            MAX_PRICE = sellprice
 
     if (not IS_HOLD)and(sellprice>=MAX_PRICE):
         w.torder(StockCode,"Buy",sellprice,POSITION,logonid=LOGONID)
@@ -24,8 +23,6 @@ def TrackPrice(indata):
 
     if (buyprice > MAX_PRICE):
         MAX_PRICE = buyprice
-        string = u"买1:" + str(buyprice) +"\n"
-        pf.writelines(string)
     elif IS_HOLD and (MAX_PRICE - buyprice)>=COST_PRICE*STOP_RATE:
         w.torder(StockCode,"Sell",buyprice,POSITION,logonid=LOGONID)
 
