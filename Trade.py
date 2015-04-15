@@ -2,15 +2,6 @@
 #如果当前价格高于最高价格，则更新最高价格；
 #如果最高价格与当前价格的差价大于等于成本价格的7%，则止损；
 def TrackPrice(indata):
-    global MAX_PRICE
-    global w
-    global StockCode
-    global pf
-    global COST_PRICE
-    global STOP_RATE
-    global LOGONID
-    global IS_HOLD
-
     print indata
           
     if indata.ErrorCode!=0:
