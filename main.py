@@ -1,4 +1,4 @@
-﻿#-*- coding:UTF-8 -*-
+#-*- coding:UTF-8 -*-
 from WindPy import *
 import Select
 import Timer
@@ -47,7 +47,7 @@ def TrackPrice(indata,POSITION,STOP_RATE,LOGONID):
     elif IS_HOLD and (MAX_PRICE - buyprice)>=COST_PRICE*STOP_RATE:
         w.torder(StockCode,"Sell",buyprice,POSITION,logonid=LOGONID)
 
-    result = str(indata.Times[0])+" IS_HOLD:"+str(IS_HOLD)+" COST_PRICE:"+str(COST_PRICE)+" MAX_PRICE:"+str(MAX_PRICE)+"\n"
+    result = str(indata.Times[0])+" ("+str(sellprice)+" "+str(buyprice)+") "+" IS_HOLD:"+str(IS_HOLD)+" COST_PRICE:"+str(COST_PRICE)+" MAX_PRICE:"+str(MAX_PRICE)+"\n"
     pf.writelines(result)
     print result
     return()
