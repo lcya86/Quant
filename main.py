@@ -17,6 +17,7 @@ IS_STOP = True
 StockCode = ''
 
 
+
 #如果当前价格高于最高价格，则更新最高价格；
 #如果最高价格与当前价格的差价大于等于成本价格的7%，则止损；
 def TrackPrice(indata,POSITION,STOP_RATE,LOGONID):
@@ -40,16 +41,23 @@ def TrackPrice(indata,POSITION,STOP_RATE,LOGONID):
         w.torder(StockCode,"Buy",sellprice,POSITION,logonid=LOGONID)
         COST_PRICE = sellprice
         IS_HOLD = True
-        print u'下单！'
+        result = str(indata.Times[0])+' buy@'+str(sellprice)
+        pf.writelines(result)
+        print result
 
     if (buyprice > MAX_PRICE):
         MAX_PRICE = buyprice
+        result = 'MAX_PRICE:'+str(MAX_PRICE)
+        pf.writelines(result)
+        print result
     elif IS_HOLD and (MAX_PRICE - buyprice)>=COST_PRICE*STOP_RATE:
         w.torder(StockCode,"Sell",buyprice,POSITION,logonid=LOGONID)
+        IS_HOLD = False
+        profit = (COST_PRICE-buyprice)/COST_PRICE
+        result = str(indata.Times[0])+' sell@'+str(buyprice)+' profit:'+str(profit)
+        pf.writelines(result)
+        print result
 
-    result = str(indata.Times[0])+" ("+str(sellprice)+" "+str(buyprice)+") "+" IS_HOLD:"+str(IS_HOLD)+" COST_PRICE:"+str(COST_PRICE)+" MAX_PRICE:"+str(MAX_PRICE)+"\n"
-    pf.writelines(result)
-    print result
     return()
     #应该在w.cancelRequest后调用pf.close()
     #pf.close();
