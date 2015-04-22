@@ -21,15 +21,22 @@ class Context(object):
         else:
             self.cash = Capital.Data[1][0]/len(self.stocks)
 
+    def relogon(self):
+        self.logonid = w.tlogon("00000010","0","M:1521058274301","******","SHSZ").Data[0]
+
 
 
 def Trade(context,index,Position,Price):
     if Price.ErrorCode!=0:
         print('Price error code:'+str(Price.ErrorCode)+'\n')
+        if Price.ErrorCode==-40520008:
+            context.relogon()
         return()
 
     if Position.ErrorCode!=0:
         print('Position error code:'+str(Position.ErrorCode)+'\n')
+        if Position.ErrorCode==-40520008:
+            context.relogon()
         return()
 
     buy_1 = 0;
