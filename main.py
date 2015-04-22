@@ -5,77 +5,70 @@ import Timer
 from datetime import *
 from time import sleep
 
+class Context(object):
+    logonid = 0
+    #中信证券、唐山港、楚天高速、北方导航、中国北车、南方航空、比亚迪、平安银行、科大讯飞、保利地产
+    stocks = ['600030.sh','601000.sh','600035.sh','600435.sh','601299.sh','600029.sh','002594.sz','000001.sz','002230.sz','600048.sh']
+    maxprice = [0]*len(stocks)
+    stoprate = 0.07
 
 
-MAX_PRICE = 7.28
-COST_PRICE = 7.0877
-STOP_RATE = 0.05
-POSITION = 500000
-IS_HOLD = True
-LOGONID = 0
-IS_STOP = True
-StockCode = ''
+def Trade(context,index,Position,cash,Price):
+    if Price.ErrorCode!=0:
+        print('Price error code:'+str(Price.ErrorCode)+'\n')
+        return()
 
+    if Position.ErrorCode!=0:
+        print('Position error code:'+str(Position.ErrorCode)+'\n')
+        return()
 
-
-#如果当前价格高于最高价格，则更新最高价格；
-#如果最高价格与当前价格的差价大于等于成本价格的7%，则止损；
-def TrackPrice(indata,POSITION,STOP_RATE,LOGONID):
-    global MAX_PRICE
-    global COST_PRICE
-    global IS_HOLD
-          
-    if indata.ErrorCode!=0:
-        print('error code:'+str(indata.ErrorCode)+'\n')
-        return();
-
-    buyprice = 0;
-    sellprice = 0;
-    for k in range(0,len(indata.Fields)):
-        if(indata.Fields[k] == "RT_BID1"):
-            buyprice = indata.Data[k][0]
-        if(indata.Fields[k] == "RT_ASK1"):
-            sellprice = indata.Data[k][0]
-
-    if (not IS_HOLD)and(sellprice>=MAX_PRICE):
-        w.torder(StockCode,"Buy",sellprice,POSITION,logonid=LOGONID)
-        COST_PRICE = sellprice
-        IS_HOLD = True
-        result = str(indata.Times[0])+' buy@'+str(sellprice)
-        pf.writelines(result)
+    buy_1 = 0;
+    sell_1 = 0;
+    for k in range(0,len(Price.Fields)):
+        if(Price.Fields[k] == "RT_BID1"):
+            buy_1 = Price.Data[k][index]
+        if(Price.Fields[k] == "RT_ASK1"):
+            sell_1 = Price.Data[k][index]
+    
+    current_price = Position.Data[11][index]
+    hold_volume = Position.Data[3][index]
+    cost_price = Position.Data[9][index]
+    if current_price > context.maxprice[index] and cash > current_price*100:
+        buy_volume = int(cash/(current_price*100)/2)*100
+        result = w.torder(context.stocks[index],"Buy",sell_1,volume,logonid=LOGONID)
         print result
-
-    if (buyprice > MAX_PRICE):
-        MAX_PRICE = buyprice
-        result = 'MAX_PRICE:'+str(MAX_PRICE)
-        pf.writelines(result)
+        print 'buy '+context.stocks[index]+''+str(volume)+'@'+str(sell_1)+'\n'
+    elif current_price < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0:
+        result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=LOGONID)
         print result
-    elif IS_HOLD and (MAX_PRICE - buyprice)>=COST_PRICE*STOP_RATE:
-        w.torder(StockCode,"Sell",buyprice,POSITION,logonid=LOGONID)
-        IS_HOLD = False
-        profit = (COST_PRICE-buyprice)/COST_PRICE
-        result = str(indata.Times[0])+' sell@'+str(buyprice)+' profit:'+str(profit)
-        pf.writelines(result)
-        print result
+        print 'sell '+context.stocks[index]+''+str(hold_volume)+'@'+str(buy_1)+'\n'
 
-    return()
-    #应该在w.cancelRequest后调用pf.close()
-    #pf.close();
+    if current_price > context.maxprice[index]:
+        context.maxprice[index] = current_price
+        
 
 w.start()
+context = Context()
 while True:
     if Timer.isBegin():
         pf = open('D:\\Github\\Quant\\traderecord.txt', 'w')
         LOGONID = w.tlogon("00000010","0","M:1521058274301","******","SHSZ").Data[0]
-        Position = w.tquery("Position",logonid=LOGONID)
-        StockCode = Select.BollSelection()
-        print "StockCode:"+StockCode
+        print "LOGONID:"+str(LOGONID)
 
     while Timer.isBegin():
-        data = w.wsq(StockCode,"rt_bid1,rt_ask1")
-        TrackPrice(data,POSITION,STOP_RATE,LOGONID)
         Position = w.tquery("Position",logonid=LOGONID)
-        sleep(1)
+        Price = w.wsq(context.stocks,"rt_bid1,rt_ask1")
+        Capital = w.tquery("Capital",logonid=LOGONID)
+        if Capital.ErrorCode!=0:
+            print('Capital error code:'+str(Capital.ErrorCode)+'\n')
+            cash = 0
+        else:
+            cash = Capital.Data[1][0]/len(context.stocks)
+        
+        for index,stock in enumerate(context.stocks):
+            Trade(context,index,Position,cash,Price)
+            
+        sleep(60)
 
 
 
