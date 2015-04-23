@@ -1,8 +1,6 @@
-#-*- coding:UTF-8 -*-
+﻿#-*- coding:UTF-8 -*-
 from WindPy import *
-import Select
 import Timer
-from datetime import *
 from time import sleep
 
 class Context(object):
