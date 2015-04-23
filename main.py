@@ -8,62 +8,98 @@ from time import sleep
 class Context(object):
     logonid = 0
     #中信证券、唐山港、楚天高速、北方导航、中国北车、南方航空、比亚迪、平安银行、科大讯飞、保利地产
-    stocks = ['600030.sh','601000.sh','600035.sh','600435.sh','601299.sh','600029.sh','002594.sz','000001.sz','002230.sz','600048.sh']
+    stocks = [u'600030.SH',u'601000.SH',u'600035.SH',u'600435.SH',u'601299.SH',u'600029.SH',u'002594.SZ',u'000001.SZ',u'002230.SZ',u'600048.SH']
     maxprice = [0]*len(stocks)
+    cash = [0]*len(stocks)
     stoprate = 0.07
+    pf = open('trade.data','r+')
 
     def __init__(self):
         self.logonid = w.tlogon("00000010","0","M:1521058274301","******","SHSZ").Data[0]
-        Capital = w.tquery("Capital",logonid=self.logonid)
-        if Capital.ErrorCode!=0:
-            print('Capital error code:'+str(Capital.ErrorCode)+'\n')
-            self.cash = [0]*len(self.stocks)
-        else:
-            self.cash = Capital.Data[1][0]/len(self.stocks)
+        self.fp = open('trade.data','r+')
+        templist = self.pf.readlines()
+        self.fp.close()
+        if templist != [] and templist[0] != '':
+            self.maxprice = [float(i) for i in templist[0].replace('[','').replace(']','').replace(' ','').split(',')]
 
-    def relogon(self):
+        if templist != [] and templist[1] != '':
+            self.cash = [float(i) for i in templist[1].replace('[','').replace(']','').replace(' ','').split(',')]
+        else:
+            Capital = w.tquery("Capital",logonid=self.logonid)
+            if Capital.ErrorCode!=0:
+                print('Capital error code:'+str(Capital.ErrorCode)+'\n')
+            else:
+                self.cash = [Capital.Data[1][0]/len(self.stocks)]*len(self.stocks)
+
+        
+
+    def logon(self):
         self.logonid = w.tlogon("00000010","0","M:1521058274301","******","SHSZ").Data[0]
 
+    def getPosition(self):
+        self.Position = w.tquery("Position",logonid=self.logonid)
+        
+
+    def getPrice(self):
+        self.Price = w.wsq(self.stocks,"rt_bid1,rt_ask1")
 
 
-def Trade(context,index,Position,Price):
-    if Price.ErrorCode!=0:
-        print('Price error code:'+str(Price.ErrorCode)+'\n')
-        if Price.ErrorCode==-40520008:
-            context.relogon()
+
+def Trade(context,index):
+    stockcode = context.stocks[index]
+    if len(context.Position.Data)>3:
+        if stockcode in context.Position.Data[0]:
+            index = context.Position.Data[0].index(stockcode)
+        else:
+            index = -1
+            
+    if context.Price.ErrorCode!=0:
+        print('Price error code:'+str(context.Price.ErrorCode)+'\n')
+        if context.Price.ErrorCode==-40520008:
+            context.logon()
         return()
 
-    if Position.ErrorCode!=0:
-        print('Position error code:'+str(Position.ErrorCode)+'\n')
-        if Position.ErrorCode==-40520008:
-            context.relogon()
+    if context.Position.ErrorCode!=0:
+        print('Position error code:'+str(context.Position.ErrorCode)+'\n')
+        if context.Position.ErrorCode==-40520008:
+            context.logon()
         return()
 
     buy_1 = 0;
     sell_1 = 0;
-    for k in range(0,len(Price.Fields)):
-        if(Price.Fields[k] == "RT_BID1"):
-            buy_1 = Price.Data[k][index]
-        if(Price.Fields[k] == "RT_ASK1"):
-            sell_1 = Price.Data[k][index]
+    for k in range(0,len(context.Price.Fields)):
+        if(context.Price.Fields[k] == "RT_BID1"):
+            buy_1 = context.Price.Data[k][index]
+        if(context.Price.Fields[k] == "RT_ASK1"):
+            sell_1 = context.Price.Data[k][index]
+
     
-    current_price = Position.Data[11][index]
-    hold_volume = Position.Data[3][index]
-    cost_price = Position.Data[9][index]
-    if current_price > context.maxprice[index] and context.cash[index] > current_price*100:
-        buy_volume = int(context.cash[index]/(current_price*100)/2)*100
-        result = w.torder(context.stocks[index],"Buy",sell_1,volume,logonid=context.logonid)
-        context.cash[index] = context.cash[index] - (sell_1*volume)
-        print result
-        print 'buy '+context.stocks[index]+''+str(volume)+'@'+str(sell_1)+'\n'
-    elif current_price < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0:
+    if len(context.Position.Data)>3:
+        if index == -1:
+            hold_volume = 0
+            cost_price = 0
+        else:
+            hold_volume = context.Position.Data[3][index]
+            cost_price = context.Position.Data[9][index]
+            
+    else:
+        hold_volume = 0
+        cost_price = 0
+        
+    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100:
+        buy_volume = int(context.cash[index]/(sell_1*100)/2)*100
+        result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
+        context.cash[index] = context.cash[index] - (sell_1*buy_volume)
+        #print result
+        print 'buy '+context.stocks[index]+' '+str(buy_volume)+'@'+str(sell_1)+'\n'
+    elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0:
         result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
-        print result
-        print 'sell '+context.stocks[index]+''+str(hold_volume)+'@'+str(buy_1)+'\n'
+        #print result
+        print 'sell '+context.stocks[index]+' '+str(hold_volume)+'@'+str(buy_1)+'\n'
 
-    if current_price > context.maxprice[index]:
-        context.maxprice[index] = current_price
+    if buy_1 > context.maxprice[index]:
+        context.maxprice[index] = buy_1
 
     return()
         
@@ -73,18 +109,20 @@ context = Context()
 while True:
     if Timer.isBegin():
         #pf = open('D:\\Github\\Quant\\traderecord.txt', 'w')
-        context.logonid = w.tlogon("00000010","0","M:1521058274301","******","SHSZ").Data[0]
+        context.logon()
         print "LOGONID:"+str(context.logonid)
 
     while Timer.isBegin():
-        Position = w.tquery("Position",logonid=context.logonid)
-        Price = w.wsq(context.stocks,"rt_bid1,rt_ask1")
-        
-        
+        context.getPosition()
+        context.getPrice()
         for index,stock in enumerate(context.stocks):
-            Trade(context,index,Position,Price)
-            
-        sleep(60)
+            Trade(context,index)
+
+        fp = open('trade.data','w')
+        fp.write(str(context.maxprice)+'\n')
+        fp.write(str(context.cash))
+        fp.close()
+        sleep(10)
 
 
 
