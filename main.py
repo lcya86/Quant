@@ -1,4 +1,4 @@
-﻿#-*- coding:UTF-8 -*-
+#-*- coding:UTF-8 -*-
 from WindPy import *
 import Timer
 from time import sleep
@@ -10,12 +10,11 @@ class Context(object):
     maxprice = [0]*len(stocks)
     cash = [0]*len(stocks)
     stoprate = 0.07
-    pf = open('trade.data','r+')
 
     def __init__(self):
         self.logonid = w.tlogon("00000010","0","M:1521058274301","******","SHSZ").Data[0]
         self.fp = open('trade.data','r+')
-        templist = self.pf.readlines()
+        templist = self.fp.readlines()
         self.fp.close()
         if templist != [] and templist[0] != '':
             self.maxprice = [float(i) for i in templist[0].replace('[','').replace(']','').replace(' ','').split(',')]
