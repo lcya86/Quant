@@ -83,8 +83,9 @@ def Trade(context,index):
     else:
         hold_volume = context.Position.Data[3][query_index]
         cost_price = context.Position.Data[9][query_index]
-            
-        
+
+    #w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
+       
     if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100:
         buy_volume = int(context.cash[index]/(sell_1*100)/2)*100
         result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
