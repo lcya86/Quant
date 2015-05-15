@@ -5,8 +5,8 @@ from time import sleep
 
 class Context(object):
     logonid = 0
-    #中信证券、唐山港、楚天高速、北方导航、中国北车、南方航空、比亚迪、平安银行、科大讯飞、保利地产、中联重科、淮柴动力、泸州老窖、四环生物、泰山石油、国电电力、凤凰股份、华仪电气、中国西电、天津海运
-    stocks = [u'600030.SH',u'601000.SH',u'600035.SH',u'600435.SH',u'601299.SH',u'600029.SH',u'002594.SZ',u'000001.SZ',u'002230.SZ',u'600048.SH',u'000157.SZ',u'000338.SZ',u'000568.SZ',u'000518.SZ',u'000554.SZ',u'600795.SH',u'600716.SH',u'600290.SH',u'601179.SH',u'600751.SH']
+    #中信证券、唐山港、楚天高速、北方导航、中国北车、南方航空、长安汽车、平安银行、科大讯飞、保利地产、中联重科、淮柴动力、泸州老窖、四环生物、泰山石油、国电电力、凤凰股份、华仪电气、中国西电、天津海运
+    stocks = [u'600030.SH',u'601000.SH',u'600035.SH',u'600435.SH',u'601299.SH',u'600029.SH',u'000625.SZ',u'000001.SZ',u'002230.SZ',u'600048.SH',u'000157.SZ',u'000338.SZ',u'000568.SZ',u'000518.SZ',u'000554.SZ',u'600795.SH',u'600716.SH',u'600290.SH',u'601179.SH',u'600751.SH']
     maxprice = [0]*len(stocks)
     cash = [0]*len(stocks)
     stoprate = 0.07
@@ -84,16 +84,18 @@ def Trade(context,index):
         hold_volume = context.Position.Data[3][query_index]
         cost_price = context.Position.Data[9][query_index]
 
-    #w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
+    if context.maxprice[index] == 0:
+        context.maxprice[index] = sell_1;
        
     if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100:
-        buy_volume = int(context.cash[index]/(sell_1*100)/2)*100
+        buy_volume = int(context.cash[index]/(sell_1*100))*100
         result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
         context.cash[index] = context.cash[index] - (sell_1*buy_volume)
         #print result
         print 'buy '+context.stocks[index]+' '+str(buy_volume)+'@'+str(sell_1)+'\n'
     elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0:
         result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
+        context.maxprice[index] = buy_1
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
         #print result
         print 'sell '+context.stocks[index]+' '+str(hold_volume)+'@'+str(buy_1)+'\n'
