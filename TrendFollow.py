@@ -10,7 +10,6 @@ class Context(object):
     stocks = [u'600028.SH',u'600048.SH',u'600035.SH']
     maxprice = [0]*len(stocks)
     cash = [0]*len(stocks)
-
     stoprate = 0.04
 
     def __init__(self):
@@ -32,7 +31,8 @@ class Context(object):
         if history.ErrorCode!=0:
             print('history error code:'+str(history.ErrorCode)+'\n')
         else:
-            self.maxprice = history.data
+            for index,stock in enumerate(self.stocks):
+                self.maxprice[index] = history.Data[index][0]
 
         
 
@@ -105,9 +105,6 @@ def Trade(context,index):
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
         #print result
         print 'sell '+context.stocks[index]+' '+str(hold_volume)+'@'+str(buy_1)+'\n'
-
-    if buy_1 > context.maxprice[index]:
-        context.maxprice[index] = buy_1
 
     return()
         
