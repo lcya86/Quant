@@ -19,8 +19,8 @@ class Context(object):
         templist = self.fp.readlines()
         self.fp.close()
 
-        if templist != [] and templist[1] != '':
-            self.cash = [float(i) for i in templist[1].replace('[','').replace(']','').replace(' ','').split(',')]
+        if templist != [] and templist[0] != '':
+            self.cash = [float(i) for i in templist[0].replace('[','').replace(']','').replace(' ','').split(',')]
         else:
             Capital = w.tquery("Capital",logonid=self.logonid)
             if Capital.ErrorCode!=0:
@@ -94,14 +94,14 @@ def Trade(context,index):
     if context.maxprice[index] == 0:
         context.maxprice[index] = sell_1;
        
-    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100 and traded[index] = False:
+    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100 and traded[index] == False:
         buy_volume = int(context.cash[index]/(sell_1*100))*100
         result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
         context.cash[index] = context.cash[index] - (sell_1*buy_volume)
         traded[index] = True
         #print result
         print 'buy '+context.stocks[index]+' '+str(buy_volume)+'@'+str(sell_1)+'\n'
-    elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0 and traded = False:
+    elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0 and traded == False:
         result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
         context.maxprice[index] = buy_1
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
