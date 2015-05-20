@@ -2,15 +2,15 @@
 from WindPy import *
 import Timer
 from time import sleep
-    traded = [False]*len(stocks)
+
 class Context(object):
     logonid = 0
     #中信证券、唐山港、楚天高速、北方导航、中国北车、南方航空、长安汽车、平安银行、科大讯飞、保利地产、中联重科、淮柴动力、泸州老窖、四环生物、泰山石油、国电电力、凤凰股份、华仪电气、中国西电、天津海运
     #stocks = [u'600030.SH',u'601000.SH',u'600035.SH',u'600435.SH',u'601299.SH',u'600029.SH',u'000625.SZ',u'000001.SZ',u'002230.SZ',u'600048.SH',u'000157.SZ',u'000338.SZ',u'000568.SZ',u'000518.SZ',u'000554.SZ',u'600795.SH',u'600716.SH',u'600290.SH',u'601179.SH',u'600751.SH']
     stocks = [u'600028.SH',u'600048.SH',u'600035.SH']
+    traded = [False]*len(stocks)
     maxprice = [0]*len(stocks)
     cash = [0]*len(stocks)
-
     stoprate = 0.04
 
     def __init__(self):
