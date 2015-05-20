@@ -2,7 +2,7 @@
 from WindPy import *
 import Timer
 from time import sleep
-
+    traded = [False]*len(stocks)
 class Context(object):
     logonid = 0
     #中信证券、唐山港、楚天高速、北方导航、中国北车、南方航空、长安汽车、平安银行、科大讯飞、保利地产、中联重科、淮柴动力、泸州老窖、四环生物、泰山石油、国电电力、凤凰股份、华仪电气、中国西电、天津海运
@@ -32,7 +32,8 @@ class Context(object):
         if history.ErrorCode!=0:
             print('history error code:'+str(history.ErrorCode)+'\n')
         else:
-            self.maxprice = history.data
+            for index,stock in enumerate(self.stocks):
+                self.maxprice[index] = history.Data[index][0]
 
         
 
@@ -93,21 +94,20 @@ def Trade(context,index):
     if context.maxprice[index] == 0:
         context.maxprice[index] = sell_1;
        
-    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100:
+    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100 and traded[index] = False:
         buy_volume = int(context.cash[index]/(sell_1*100))*100
         result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
         context.cash[index] = context.cash[index] - (sell_1*buy_volume)
+        traded[index] = True
         #print result
         print 'buy '+context.stocks[index]+' '+str(buy_volume)+'@'+str(sell_1)+'\n'
-    elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0:
+    elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0 and traded = False:
         result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
         context.maxprice[index] = buy_1
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
+        traded[index] = True
         #print result
         print 'sell '+context.stocks[index]+' '+str(hold_volume)+'@'+str(buy_1)+'\n'
-
-    if buy_1 > context.maxprice[index]:
-        context.maxprice[index] = buy_1
 
     return()
         
@@ -115,7 +115,7 @@ def Trade(context,index):
 w.start()
 context = Context()
 while True:
-    while Timer.isBegin():
+    while Timer.almostEnd():
         context.logon()
         context.getPosition()
         context.getPrice()

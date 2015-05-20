@@ -8,3 +8,10 @@ def isBegin():
         return True
     else:
         return False
+
+
+def almostEnd():
+    if datetime.now().time()>time(14,58,59) and datetime.now().time()<time(15,0,0):
+        return True
+    else:
+        return False
