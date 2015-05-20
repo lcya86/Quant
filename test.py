@@ -1,5 +1,8 @@
 #-*- coding:UTF-8 -*-
 from WindPy import *
+import time
 w.start()
-history = w.wsd("600028.SH,600048.SH,600035.SH", "high", "ED-60D", "2015-05-18")
+#print time.strftime("%Y-%m-%d",time.localtime(int(time.time())))
+stocks = [u'600028.SH',u'600048.SH',u'600035.SH']
+history = w.wsd(stocks, "high", "ED-60D", time.strftime("%Y-%m-%d",time.localtime(int(time.time()))))
 print history

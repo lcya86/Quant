@@ -1,7 +1,7 @@
 #-*- coding:UTF-8 -*-
 from WindPy import *
 import Timer
-from time import sleep
+import time
 
 class Context(object):
     logonid = 0
@@ -28,12 +28,7 @@ class Context(object):
             else:
                 self.cash = [Capital.Data[1][0]/len(self.stocks)]*len(self.stocks)
 
-        history = w.wsd("600028.SH,600048.SH,600035.SH", "high", "ED-60D", "2015-05-18", "Fill=Previous;Currency=CNY")
-        if history.ErrorCode!=0:
-            print('history error code:'+str(history.ErrorCode)+'\n')
-        else:
-            for index,stock in enumerate(self.stocks):
-                self.maxprice[index] = history.Data[index][0]
+        
 
         
 
@@ -48,6 +43,15 @@ class Context(object):
 
     def getPrice(self):
         self.Price = w.wsq(self.stocks,"rt_bid1,rt_ask1")
+
+    def getHistory(self):
+        today = time.strftime("%Y-%m-%d",time.localtime(int(time.time())))
+        history = w.wsd(self.stocks, "high", "ED-60D",today, "Fill=Previous;Currency=CNY")
+        if history.ErrorCode!=0:
+            print('history error code:'+str(history.ErrorCode)+'\n')
+        else:
+            for index,stock in enumerate(self.stocks):
+                self.maxprice[index] = history.Data[index][0]
 
 
 
@@ -119,13 +123,14 @@ while True:
         context.logon()
         context.getPosition()
         context.getPrice()
+        context.getHistory()
         for index,stock in enumerate(context.stocks):
             Trade(context,index)
 
         fp = open('trade.data','w')
         fp.write(str(context.cash))
         fp.close()
-        sleep(10)
+        time.sleep(10)
 
 
 
