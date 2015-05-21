@@ -28,6 +28,7 @@ class Context(object):
             else:
                 self.cash = [Capital.Data[1][0]/len(self.stocks)]*len(self.stocks)
 
+        self.getHistory()
         
 
         
@@ -49,7 +50,9 @@ class Context(object):
         history = w.wsd(self.stocks, "high", "ED-60D",today, "Fill=Previous;Currency=CNY")
         if history.ErrorCode!=0:
             print('history error code:'+str(history.ErrorCode)+'\n')
+            return self.getHistory()
         else:
+            print('history get!\n')
             for index,stock in enumerate(self.stocks):
                 self.maxprice[index] = history.Data[index][0]
 
@@ -123,7 +126,6 @@ while True:
         context.logon()
         context.getPosition()
         context.getPrice()
-        context.getHistory()
         for index,stock in enumerate(context.stocks):
             Trade(context,index)
 
