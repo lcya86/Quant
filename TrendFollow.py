@@ -10,6 +10,7 @@ class Context(object):
     stocks = [u'600028.SH',u'600048.SH',u'600035.SH']
     traded = [False]*len(stocks)
     maxprice = [0]*len(stocks)
+    costprice = [0]*len(stocks)
     cash = [0]*len(stocks)
     stoprate = 0.04
 
@@ -27,8 +28,11 @@ class Context(object):
                 print('Capital error code:'+str(Capital.ErrorCode)+'\n')
             else:
                 self.cash = [Capital.Data[1][0]/len(self.stocks)]*len(self.stocks)
-
-        self.getHistory()
+                
+        if templist != [] and templist[1] != '':
+            self.costprice = [float(i) for i in templist[1].replace('[','').replace(']','').replace(' ','').split(',')]
+                
+        
         
 
         
@@ -47,14 +51,21 @@ class Context(object):
 
     def getHistory(self):
         today = time.strftime("%Y-%m-%d",time.localtime(int(time.time())))
-        history = w.wsd(self.stocks, "high", "ED-60D",today, "Fill=Previous;Currency=CNY")
+        history = w.wsd(self.stocks, "high", "ED-56TD",today, "")
         if history.ErrorCode!=0:
             print('history error code:'+str(history.ErrorCode)+'\n')
             return self.getHistory()
         else:
-            print('history get!\n')
             for index,stock in enumerate(self.stocks):
                 self.maxprice[index] = history.Data[index][0]
+
+    def isTradeDay(self):
+        today = time.strftime("%Y-%m-%d",time.localtime(int(time.time())))
+        d = w.tdayscount(today,today)
+        if d.Data[0][0]==1:
+            return True
+        else:
+            return False
 
 
 
@@ -105,10 +116,11 @@ def Trade(context,index):
         buy_volume = int(context.cash[index]/(sell_1*100))*100
         result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
         context.cash[index] = context.cash[index] - (sell_1*buy_volume)
+        context.costprice[index] = sell_1
         traded[index] = True
         #print result
         print 'buy '+context.stocks[index]+' '+str(buy_volume)+'@'+str(sell_1)+'\n'
-    elif sell_1 < (context.maxprice[index] - context.stoprate*cost_price) and hold_volume > 0 and traded == False:
+    elif sell_1 < (context.maxprice[index] - context.stoprate*context.costprice[index]) and hold_volume > 0 and traded == False:
         result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
         context.maxprice[index] = buy_1
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
@@ -123,16 +135,19 @@ w.start()
 context = Context()
 while True:
     while Timer.almostEnd():
-        context.logon()
-        context.getPosition()
-        context.getPrice()
-        for index,stock in enumerate(context.stocks):
-            Trade(context,index)
+        if context.isTradeDay():
+            context.logon()
+            context.getHistory()
+            context.getPosition()
+            context.getPrice()
+            for index,stock in enumerate(context.stocks):
+                Trade(context,index)
 
-        fp = open('trade.data','w')
-        fp.write(str(context.cash))
-        fp.close()
-        time.sleep(10)
+            fp = open('trade.data','w')
+            fp.write(str(context.cash))
+            fp.write(str(context.costprice))
+            fp.close()
+            time.sleep(20)
 
 
 
