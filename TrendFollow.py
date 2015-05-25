@@ -112,7 +112,7 @@ def Trade(context,index):
     if context.maxprice[index] == 0:
         context.maxprice[index] = sell_1;
        
-    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100 and traded[index] == False:
+    if buy_1 > context.maxprice[index] and context.cash[index] > sell_1*100 and context.traded[index] == False:
         buy_volume = int(context.cash[index]/(sell_1*100))*100
         result = w.torder(context.stocks[index],"Buy",sell_1,buy_volume,logonid=context.logonid)
         context.cash[index] = context.cash[index] - (sell_1*buy_volume)
@@ -120,11 +120,11 @@ def Trade(context,index):
         traded[index] = True
         #print result
         print 'buy '+context.stocks[index]+' '+str(buy_volume)+'@'+str(sell_1)+'\n'
-    elif sell_1 < (context.maxprice[index] - context.stoprate*context.costprice[index]) and hold_volume > 0 and traded == False:
+    elif sell_1 < (context.maxprice[index] - context.stoprate*context.costprice[index]) and hold_volume > 0 and context.traded[index] == False:
         result = w.torder(context.stocks[index],"Sell",buy_1,hold_volume,logonid=context.logonid)
         context.maxprice[index] = buy_1
         context.cash[index] = context.cash[index] + (buy_1*hold_volume)
-        traded[index] = True
+        context.traded[index] = True
         #print result
         print 'sell '+context.stocks[index]+' '+str(hold_volume)+'@'+str(buy_1)+'\n'
 
